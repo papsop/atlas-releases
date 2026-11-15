@@ -1,0 +1,31 @@
+name: Bug report
+description: Report something that is not working properly in Atlas
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Atlas version
+      description: Prefilled when opened from Atlas.
+      placeholder: e.g. 0.17.0-dev.1
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug and what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: How can we reproduce this?
+      placeholder: |
+        1. Open ...
+        2. Click ...
+        3. See ...
+  - type: textarea
+    id: context
+    attributes:
+      label: Environment and extra context
+      description: Windows version, workspace type (Git / Perforce), or screenshots. Please avoid sharing private source code or secrets.
