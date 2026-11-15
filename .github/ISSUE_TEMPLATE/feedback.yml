@@ -1,0 +1,16 @@
+name: Send feedback
+description: Share general feedback about using Atlas
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Atlas version
+      description: Prefilled when opened from Atlas.
+      placeholder: e.g. 0.17.0-dev.1
+  - type: textarea
+    id: feedback
+    attributes:
+      label: Your feedback
+      description: Share what is working well, what feels rough, or anything else on your mind.
+    validations:
+      required: true
