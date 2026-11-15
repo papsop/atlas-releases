@@ -1,0 +1,22 @@
+name: Suggest an idea
+description: Propose a new feature or improvement for Atlas
+labels: ["enhancement"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Atlas version
+      description: Prefilled when opened from Atlas.
+      placeholder: e.g. 0.17.0-dev.1
+  - type: textarea
+    id: summary
+    attributes:
+      label: What would you like to see?
+      description: Describe the feature or improvement and the problem it solves.
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: How would you use it?
+      description: Share any details on your workflow or alternatives you have tried.
