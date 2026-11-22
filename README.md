@@ -9,7 +9,7 @@ standalone C++ repositories.
 [**Download for Windows**](https://github.com/papsop/atlas-releases/releases/latest) ·
 [Preview builds](https://github.com/papsop/atlas-releases/releases) ·
 [Tutorials](https://atlas.patrikpapso.com/tutorials.html) ·
-[Report an issue](https://github.com/papsop/atlas-releases/issues/new/choose)
+[Report an issue](https://github.com/papsop/atlas-releases/issues/new/choose) · [Join the Atlas Discord](https://discord.gg/7n4MWTWdrN)
 
 ## Conversation and Stage
 
