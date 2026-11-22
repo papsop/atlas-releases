@@ -1,4 +1,4 @@
-# Atlas
+# <img src="atlas-icon.svg" width="36" height="36" alt=""> Atlas
 
 **A C++ IDE for focused agentic development.**
 
