@@ -1,0 +1,90 @@
+name: Announce Atlas releases on Discord
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published release tag to announce
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  announce:
+    runs-on: ubuntu-latest
+    env:
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_RELEASE_WEBHOOK_URL }}
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ inputs.tag }}
+    steps:
+      - name: Send release notes
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          import { readFileSync } from 'node:fs';
+          import { setTimeout } from 'node:timers/promises';
+
+          const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
+          let release = event.release;
+          if (!release) {
+            const tag = encodeURIComponent(process.env.RELEASE_TAG);
+            const endpoint = `${process.env.GITHUB_API_URL}/repos/${process.env.GITHUB_REPOSITORY}/releases/tags/${tag}`;
+            const response = await fetch(endpoint, {
+              headers: { Authorization: `Bearer ${process.env.GH_TOKEN}`, Accept: 'application/vnd.github+json' },
+            });
+            if (!response.ok) throw new Error(`GitHub release lookup failed (HTTP ${response.status})`);
+            release = await response.json();
+          }
+          if (release.draft || release.tag_name === 'preview') process.exit(0);
+
+          const url = process.env.DISCORD_WEBHOOK_URL;
+          if (!url) throw new Error('Set the DISCORD_RELEASE_WEBHOOK_URL repository secret');
+          const webhook = new URL(url);
+          if (webhook.protocol !== 'https:' || webhook.hostname !== 'discord.com' ||
+              !/^\/api\/webhooks\/\d+\/[\w-]+$/.test(webhook.pathname)) {
+            throw new Error('Use the plain Discord webhook URL, without /github');
+          }
+          webhook.searchParams.set('wait', 'true');
+
+          const limit = 4096;
+          const chunks = [];
+          let notes = (release.body ?? '').trim() || 'View the release on GitHub for details.';
+          while (notes.length > limit) {
+            const paragraph = notes.lastIndexOf('\n\n', limit);
+            const line = notes.lastIndexOf('\n', limit);
+            let split = paragraph > limit / 2 ? paragraph : line > limit / 2 ? line : limit;
+            if (/[\uD800-\uDBFF]/.test(notes[split - 1])) split--;
+            chunks.push(notes.slice(0, split).trimEnd());
+            notes = notes.slice(split).trimStart();
+          }
+          if (notes) chunks.push(notes);
+
+          const channel = release.prerelease ? 'Preview' : 'Stable';
+          for (const [index, description] of chunks.entries()) {
+            const part = chunks.length > 1 ? ` · ${index + 1}/${chunks.length}` : '';
+            const title = (release.name || release.tag_name).slice(0, 256 - part.length) + part;
+            const body = JSON.stringify({
+              allowed_mentions: { parse: [] },
+              embeds: [{ title, description, url: release.html_url, footer: { text: channel },
+                         color: release.prerelease ? 0x5865F2 : 0x2D9D78 }],
+            });
+            const send = () => fetch(webhook, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body,
+            });
+            let response = await send();
+            if (response.status === 429) {
+              const { retry_after: retryAfter } = await response.json();
+              if (Number.isFinite(retryAfter) && retryAfter <= 60) {
+                await setTimeout(Math.ceil(retryAfter * 1000));
+                response = await send();
+              }
+            }
+            if (!response.ok) throw new Error(`Discord rejected the release announcement (HTTP ${response.status})`);
+          }
+          JS
